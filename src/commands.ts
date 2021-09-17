@@ -1,26 +1,15 @@
-import { SlashCommandBuilder } from '@discordjs/builders';
+import fs from 'fs';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { clientId, guildId, token } from '../config.json';
 
-const commands = [
-  new SlashCommandBuilder()
-    .setName('play')
-    .setDescription('Plays a song')
-    .addStringOption(option =>
-    option.setName('url')
-          .setDescription('The URL to play from')
-          .setRequired(true)),
-  new SlashCommandBuilder()
-    .setName('skip')
-    .setDescription('Skip to the next song in the queue'),  
-  new SlashCommandBuilder()
-    .setName('queue')
-    .setDescription('See the music queue'),          
-  new SlashCommandBuilder()
-    .setName('leave')
-    .setDescription('Leave the voice channel'),                    
-].map(command => command.toJSON());
+const commands = [];
+const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.ts'));
+
+for (const file of commandFiles) {
+	const command = require(`./commands/${file}`);
+	commands.push(command.data.toJSON());
+}
 
 const rest = new REST({ version: '9' }).setToken(token);
 
