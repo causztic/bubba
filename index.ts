@@ -1,7 +1,7 @@
 // https://github.com/discordjs/voice/tree/main/examples/music-bot
 
 import { Client, GuildMember, Intents, Snowflake } from 'discord.js';
-import { joinVoiceChannel, VoiceConnectionStatus, entersState } from '@discordjs/voice';
+import { joinVoiceChannel, VoiceConnectionStatus, entersState, AudioPlayerStatus, AudioResource } from '@discordjs/voice';
 import { token } from './config.json';
 import { MusicSubscription } from './src/music/subscription';
 import { Track } from './src/music/track';
@@ -18,6 +18,7 @@ client.on('interactionCreate', async interaction => {
 
   let subscription = subscriptions.get(interaction.guildId);
 
+  // TODO: refactor
   if (interaction.commandName === 'play') {
     await interaction.deferReply();
     const url = interaction.options.getString('url', true);
@@ -72,7 +73,42 @@ client.on('interactionCreate', async interaction => {
         console.warn(error);
         await interaction.reply('Failed to play track, please try again later!');
       }
-    }
+  } else if (interaction.commandName === 'skip') {
+		if (subscription) {
+			// Calling .stop() on an AudioPlayer causes it to transition into the Idle state. Because of a state transition
+			// listener defined in music/subscription.ts, transitions into the Idle state mean the next track from the queue
+			// will be loaded and played.
+			subscription.audioPlayer.stop();
+			await interaction.reply('Skipped song!');
+		} else {
+			await interaction.reply('Not playing in this server!');
+		}
+  } else if (interaction.commandName === 'queue') {
+		// Print out the current queue, including up to the next 5 tracks to be played.
+		if (subscription) {
+			const current =
+				subscription.audioPlayer.state.status === AudioPlayerStatus.Idle
+					? `Nothing is currently playing!`
+					: `Playing **${(subscription.audioPlayer.state.resource as AudioResource<Track>).metadata.title}**`;
+
+			const queue = subscription.queue
+				.slice(0, 5)
+				.map((track, index) => `${index + 1}) ${track.title}`)
+				.join('\n');
+
+			await interaction.reply(`${current}\n\n${queue}`);
+		} else {
+			await interaction.reply('Not playing in this server!');
+		}
+	} else if (interaction.commandName === 'leave') {
+		if (subscription) {
+			subscription.voiceConnection.destroy();
+			subscriptions.delete(interaction.guildId);
+			await interaction.reply({ content: `Left channel!`, ephemeral: true });
+		} else {
+			await interaction.reply('Not playing in this server!');
+		}
+	}
   });
   
   
