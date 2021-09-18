@@ -108,7 +108,11 @@ client.on('interactionCreate', async interaction => {
 		} else {
 			await interaction.reply('Not playing in this server!');
 		}
-	}
+	} else if (interaction.commandName === 'loop') {
+    if (subscription) {
+      subscription.loop();
+    }
+  }
   });
   
   

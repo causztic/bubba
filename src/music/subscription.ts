@@ -23,6 +23,7 @@ export class MusicSubscription {
   public queue: Track[];
   public queueLock = false;
   public readyLock = false;
+  public isLooping = false;
   
   public constructor(voiceConnection: VoiceConnection) {
     this.voiceConnection = voiceConnection;
@@ -119,6 +120,13 @@ export class MusicSubscription {
       this.queue = [];
       this.audioPlayer.stop(true);
     }
+
+    /**
+    * Toggles looping of the current song
+    */
+    public loop() {
+      this.isLooping = !this.isLooping;
+    }
     
     /**
     * Attempts to play a Track from the queue
@@ -131,8 +139,16 @@ export class MusicSubscription {
       // Lock the queue to guarantee safe access
       this.queueLock = true;
       
-      // Take the first item from the queue. This is guaranteed to exist due to the non-empty check above.
-      const nextTrack = this.queue.shift()!;
+      let nextTrack: Track;
+
+      if (this.isLooping) {
+        // If looping, take the current song in the queue.
+        nextTrack = this.queue[0];
+      } else {
+        // Take the first item from the queue. This is guaranteed to exist due to the non-empty check above.
+        nextTrack = this.queue.shift()!;
+      }
+
       try {
         // Attempt to convert the Track into an AudioResource (i.e. start streaming the video)
         const resource = await nextTrack.createAudioResource();
