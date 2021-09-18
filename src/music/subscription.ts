@@ -140,15 +140,8 @@ export class MusicSubscription {
       // Lock the queue to guarantee safe access
       this.queueLock = true;
       
-      let nextTrack: Track;
-
-      if (this.isRepeatingSong) {
-        // If looping, take the current song in the queue.
-        nextTrack = this.queue[0];
-      } else {
-        // Take the first item from the queue. This is guaranteed to exist due to the non-empty check above.
-        nextTrack = this.queue.shift()!;
-      }
+      // Take the first item from the queue. This is guaranteed to exist due to the non-empty check above.
+      const nextTrack = this.queue.shift()!;
 
       try {
         // Attempt to convert the Track into an AudioResource (i.e. start streaming the video)

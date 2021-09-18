@@ -108,6 +108,7 @@ client.on('interactionCreate', async interaction => {
 		if (subscription) {
       if (interaction.options.getSubcommand() === 'song') {
         subscription.repeatSong();
+        await interaction.reply('Repeating current song!');
       }
 		} else {
 			await interaction.reply('Not playing in this server!');
