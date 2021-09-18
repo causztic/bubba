@@ -23,7 +23,7 @@ export class MusicSubscription {
   public queue: Track[];
   public queueLock = false;
   public readyLock = false;
-  public isLooping = false;
+  public isRepeatingSong = false;
   
   public constructor(voiceConnection: VoiceConnection) {
     this.voiceConnection = voiceConnection;
@@ -117,15 +117,16 @@ export class MusicSubscription {
     */
     public stop() {
       this.queueLock = true;
+      this.isRepeatingSong = false;
       this.queue = [];
       this.audioPlayer.stop(true);
     }
 
     /**
-    * Toggles looping of the current song
+    * Toggles repeating of the song
     */
-    public loop() {
-      this.isLooping = !this.isLooping;
+    public repeatSong() {
+      this.isRepeatingSong = !this.isRepeatingSong;
     }
     
     /**
@@ -141,7 +142,7 @@ export class MusicSubscription {
       
       let nextTrack: Track;
 
-      if (this.isLooping) {
+      if (this.isRepeatingSong) {
         // If looping, take the current song in the queue.
         nextTrack = this.queue[0];
       } else {
