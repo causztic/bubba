@@ -107,7 +107,7 @@ client.on('interactionCreate', async interaction => {
 	} else if (interaction.commandName === 'repeat') {
 		if (subscription) {
       if (interaction.options.getSubcommand() === 'song') {
-        subscription.repeatSong();
+        subscription.repeatTrack();
         await interaction.reply('Repeating current song!');
       }
 		} else {

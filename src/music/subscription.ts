@@ -23,7 +23,6 @@ export class MusicSubscription {
   public queue: Track[];
   public queueLock = false;
   public readyLock = false;
-  public isRepeatingSong = false;
   public currentTrack?: Track;
   
   public constructor(voiceConnection: VoiceConnection) {
@@ -118,16 +117,26 @@ export class MusicSubscription {
     */
     public stop() {
       this.queueLock = true;
-      this.isRepeatingSong = false;
       this.queue = [];
       this.audioPlayer.stop(true);
     }
 
     /**
-    * Toggles repeating of the song
+    * Toggles repeating of the current track
     */
-    public repeatSong() {
-      this.isRepeatingSong = !this.isRepeatingSong;
+    public repeatTrack() {
+      this.currentTrack?.toggleRepeating();
+    }
+
+    /**
+     * A queue is really empty only if the length is 0 and there is no currentTrack.
+     */
+    private isEmptyQueue() {
+      return this.queue.length === 0 && this.currentTrack === undefined;
+    }
+
+    private isPlayingSongs() {
+      return this.audioPlayer.state.status !== AudioPlayerStatus.Idle
     }
     
     /**
@@ -137,20 +146,14 @@ export class MusicSubscription {
       // If:
       // 1. the queue is locked (already being processed), 
       // 2. the audio player is already playing something, or
-      // 3. there are no more songs and it is not repeating
-
-      const noMoreSongs = this.queue.length === 0;
-      const isPlayingSongs = this.audioPlayer.state.status !== AudioPlayerStatus.Idle;
-      if (this.queueLock || isPlayingSongs || noMoreSongs && !this.isRepeatingSong) {
+      // 3. there are no more tracks
+      if (this.queueLock || this.isPlayingSongs() || this.isEmptyQueue()) {
         return;
       }
       // Lock the queue to guarantee safe access
       this.queueLock = true;
       
-      // Handle repeats: If:
-      // 1. The song is not repeating, or
-      // 2. The flag is toggled but the track has not been set yet
-      if (!this.isRepeatingSong || (this.isRepeatingSong && this.currentTrack === undefined)) {
+      if (!this.currentTrack?.repeating) {
         // Take the first item from the queue. This is guaranteed to exist due to the non-empty check above.
         this.currentTrack = this.queue.shift()!;
       }
