@@ -103,7 +103,7 @@ const handleQueue = async (
   if (subscription) {
     const current =
       subscription.audioPlayer.state.status === AudioPlayerStatus.Idle
-        ? `Nothing is currently playing!`
+        ? 'Nothing is currently playing!'
         : `Playing **${(subscription.audioPlayer.state.resource as AudioResource<Track>).metadata.title}**`;
 
     const queue = subscription.queue
@@ -142,7 +142,7 @@ const handleLeave = async (
   if (subscription) {
     subscription.voiceConnection.destroy();
     subscriptions.delete(interaction.guildId!);
-    await interaction.reply({ content: `Left channel!`, ephemeral: true });
+    await interaction.reply({ content: 'Left channel!', ephemeral: true });
   } else {
     await interaction.reply('Not playing in this server!');
   }
