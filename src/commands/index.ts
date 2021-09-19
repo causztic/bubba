@@ -1,13 +1,14 @@
 import fs from 'fs';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import { clientId, guildId, token } from '../config.json';
+import { clientId, guildId, token } from '../../config.json';
 
 const commands = [];
-const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.ts'));
+const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.ts') && !file.startsWith('index'));
 
 for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
+	const command = require(`./${file}`);
+    console.log(`Registering ${file}`)
 	commands.push(command.data.toJSON());
 }
 
