@@ -23,6 +23,7 @@ export class MusicSubscription {
   public queue: Track[];
   public queueLock = false;
   public readyLock = false;
+  public currentTrack?: Track;
   
   public constructor(voiceConnection: VoiceConnection) {
     this.voiceConnection = voiceConnection;
@@ -119,28 +120,52 @@ export class MusicSubscription {
       this.queue = [];
       this.audioPlayer.stop(true);
     }
+
+    /**
+    * Toggles repeating of the current track
+    */
+    public repeatTrack() {
+      this.currentTrack?.toggleRepeating();
+    }
+
+    /**
+     * A queue is really empty only if the length is 0 and there is no currentTrack.
+     */
+    private isEmptyQueue() {
+      return this.queue.length === 0 && this.currentTrack === undefined;
+    }
+
+    private isPlayingSongs() {
+      return this.audioPlayer.state.status !== AudioPlayerStatus.Idle
+    }
     
     /**
     * Attempts to play a Track from the queue
     */
     private async processQueue(): Promise<void> {
-      // If the queue is locked (already being processed), is empty, or the audio player is already playing something, return
-      if (this.queueLock || this.audioPlayer.state.status !== AudioPlayerStatus.Idle || this.queue.length === 0) {
+      // If:
+      // 1. the queue is locked (already being processed), 
+      // 2. the audio player is already playing something, or
+      // 3. there are no more tracks
+      if (this.queueLock || this.isPlayingSongs() || this.isEmptyQueue()) {
         return;
       }
       // Lock the queue to guarantee safe access
       this.queueLock = true;
       
-      // Take the first item from the queue. This is guaranteed to exist due to the non-empty check above.
-      const nextTrack = this.queue.shift()!;
+      if (!this.currentTrack?.repeating) {
+        // Take the first item from the queue. This is guaranteed to exist due to the non-empty check above.
+        this.currentTrack = this.queue.shift()!;
+      }
+
       try {
         // Attempt to convert the Track into an AudioResource (i.e. start streaming the video)
-        const resource = await nextTrack.createAudioResource();
+        const resource = await this.currentTrack!.createAudioResource();
         this.audioPlayer.play(resource);
         this.queueLock = false;
       } catch (error) {
         // If an error occurred, try the next item of the queue instead
-        nextTrack.onError(error as Error);
+        this.currentTrack!.onError(error as Error);
         this.queueLock = false;
         return this.processQueue();
       }

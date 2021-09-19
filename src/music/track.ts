@@ -28,16 +28,43 @@ const noop = () => {};
 export class Track implements TrackData {
   public readonly url: string;
   public readonly title: string;
-  public readonly onStart: () => void;
-  public readonly onFinish: () => void;
   public readonly onError: (error: Error) => void;
+  public repeating: boolean;
+
+  private readonly wrapperOnStart: () => void;
+  private readonly wrapperOnFinish: () => void;
   
   private constructor({ url, title, onStart, onFinish, onError }: TrackData) {
     this.url = url;
     this.title = title;
-    this.onStart = onStart;
-    this.onFinish = onFinish;
+    this.repeating = false;
     this.onError = onError;
+    this.wrapperOnStart = onStart;
+    this.wrapperOnFinish = onFinish;
+  }
+
+  public toggleRepeating(): void {
+    this.repeating = !this.repeating;
+  }
+
+  /**
+   * If a track is being repeated, don't run onStart to prevent additional calls
+   * as it is *technically* not started
+   */
+  public onStart(): void {
+    if (!this.repeating) {
+      this.wrapperOnStart();
+    }
+  }
+
+  /**
+   * If a track is being repeated, don't run onFinish to prevent additional calls
+   * as it is *technically* not finished
+   */
+  public onFinish(): void {
+    if (!this.repeating) {
+      this.wrapperOnFinish();
+    }
   }
   
   /**

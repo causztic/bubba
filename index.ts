@@ -9,10 +9,6 @@ import { Track } from './src/music/track';
 const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES]})
 const subscriptions = new Map<Snowflake, MusicSubscription>();
 
-client.once('ready', () => {
-  console.log('ready!');
-});
-
 client.on('interactionCreate', async interaction => {
   if (!interaction.isCommand() || !interaction.guildId) return;
 
@@ -108,7 +104,16 @@ client.on('interactionCreate', async interaction => {
 		} else {
 			await interaction.reply('Not playing in this server!');
 		}
-	}
+	} else if (interaction.commandName === 'repeat') {
+		if (subscription) {
+      if (interaction.options.getSubcommand() === 'song') {
+        subscription.repeatTrack();
+        await interaction.reply('Repeating current song!');
+      }
+		} else {
+			await interaction.reply('Not playing in this server!');
+		}    
+  }
   });
   
   
