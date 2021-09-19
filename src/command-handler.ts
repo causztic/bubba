@@ -87,6 +87,8 @@ const handleSkip = async (
     // Calling .stop() on an AudioPlayer causes it to transition into the Idle state. Because of a state transition
     // listener defined in music/subscription.ts, transitions into the Idle state mean the next track from the queue
     // will be loaded and played.
+    
+    subscription.currentTrack = undefined;
     subscription.audioPlayer.stop();
     await interaction.reply('Skipped song!');
   } else {
