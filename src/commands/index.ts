@@ -7,8 +7,8 @@ const commands = [];
 const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.ts') && !file.startsWith('index'));
 
 for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
-    console.log(`Registering /${file}`)
+	const command = require(`./${file}`);
+    console.log(`Registering ${file}`)
 	commands.push(command.data.toJSON());
 }
 
