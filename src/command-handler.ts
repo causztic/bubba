@@ -17,7 +17,7 @@ const getSubscription = (subscriptions: Map<Snowflake, MusicSubscription>, guild
 }
 
 const handlePlay = async (
-  interaction: CommandInteraction, 
+  interaction: CommandInteraction,
   subscriptions: Map<Snowflake, MusicSubscription>
 ) => {
   let subscription = getSubscription(subscriptions, interaction.guildId);
@@ -39,13 +39,13 @@ const handlePlay = async (
       subscriptions.set(interaction.guildId!, subscription);
     }
   }
-    
+
   // If there is no subscription, tell the user they need to join a channel.
   if (!subscription) {
     await interaction.followUp('Join a voice channel, dumdum');
     return;
   }
-    
+
   // Make sure the connection is ready before processing the user's request
   try {
     await entersState(subscription.voiceConnection, VoiceConnectionStatus.Ready, 20e3);
@@ -54,7 +54,7 @@ const handlePlay = async (
     await interaction.followUp('Failed to join voice channel within 20 seconds, please try again later!');
     return;
   }
-    
+
   try {
     // Attempt to create a Track from the user's video URL
     const track = await Track.from(url, {
@@ -71,7 +71,7 @@ const handlePlay = async (
     });
     // Enqueue the track and reply a success message to the user
     subscription.enqueue(track);
-    await interaction.followUp(`Enqueued **${track.title}**`);
+    await interaction.followUp(`Enqueued ${track.link()}`);
   } catch (error) {
     console.warn(error);
     await interaction.followUp('Failed to play track, please try again later!');
@@ -79,7 +79,7 @@ const handlePlay = async (
 }
 
 const handleSkip = async (
-  interaction: CommandInteraction, 
+  interaction: CommandInteraction,
   subscriptions: Map<Snowflake, MusicSubscription>
 ) => {
   const subscription = getSubscription(subscriptions, interaction.guildId);
@@ -87,7 +87,7 @@ const handleSkip = async (
     // Calling .stop() on an AudioPlayer causes it to transition into the Idle state. Because of a state transition
     // listener defined in music/subscription.ts, transitions into the Idle state mean the next track from the queue
     // will be loaded and played.
-    
+
     subscription.currentTrack = undefined;
     subscription.audioPlayer.stop();
     await interaction.reply('Skipped song!');
@@ -97,16 +97,20 @@ const handleSkip = async (
 }
 
 const handleQueue = async (
-  interaction: CommandInteraction, 
+  interaction: CommandInteraction,
   subscriptions: Map<Snowflake, MusicSubscription>
 ) => {
   const subscription = getSubscription(subscriptions, interaction.guildId);
 
   if (subscription) {
-    const current =
-      subscription.audioPlayer.state.status === AudioPlayerStatus.Idle
-        ? 'Nothing is currently playing!'
-        : `Playing **${(subscription.audioPlayer.state.resource as AudioResource<Track>).metadata.title}**`;
+    let current;
+
+    if (subscription.audioPlayer.state.status === AudioPlayerStatus.Idle) {
+      current = 'Nothing is currently playing!';
+    } else {
+      const metadata = (subscription.audioPlayer.state.resource as AudioResource<Track>).metadata;
+      current = `Playing ${metadata.link()}`
+    }
 
     const queue = subscription.queue
       .slice(0, 5)
@@ -120,7 +124,7 @@ const handleQueue = async (
 }
 
 const handleRepeat = async (
-  interaction: CommandInteraction, 
+  interaction: CommandInteraction,
   subscriptions: Map<Snowflake, MusicSubscription>
 ) => {
   const subscription = getSubscription(subscriptions, interaction.guildId);

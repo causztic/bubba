@@ -1,6 +1,7 @@
 import { getInfo } from 'ytdl-core';
 import { AudioResource, createAudioResource, demuxProbe } from '@discordjs/voice';
 import { raw as ytdl } from 'youtube-dl-exec';
+import { hideLinkEmbed } from '@discordjs/builders';
 
 /**
 * This is the data required to create a Track object
@@ -45,6 +46,10 @@ export class Track implements TrackData {
 
   public toggleRepeating(): void {
     this.repeating = !this.repeating;
+  }
+
+  public link(): string {
+    return `**${this.title}** - ${hideLinkEmbed(this.url)}`;
   }
 
   /**
