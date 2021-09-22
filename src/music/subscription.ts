@@ -165,7 +165,7 @@ export class MusicSubscription {
         this.queueLock = false;
       } catch (error) {
         // If an error occurred, try the next item of the queue instead
-        this.currentTrack!.onError(error as Error);
+        this.currentTrack?.onError(error as Error);
         this.queueLock = false;
         return this.processQueue();
       }
