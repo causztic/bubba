@@ -1,0 +1,27 @@
+import handleLeave from "./leave";
+import handlePlay from "./play";
+import handleQueue from "./queue";
+import handleRepeat from "./repeat";
+import handleSkip from "./skip";
+
+import { CommandInteraction, Snowflake } from "discord.js";
+import { MusicSubscription } from "../music/subscription";
+
+declare type InteractionConsumer = (
+  interaction: CommandInteraction,
+  subscriptions: Map<Snowflake, MusicSubscription>
+) => Promise<void>
+
+const COMMAND_MAP: { [key: string]: InteractionConsumer } = {
+  play: handlePlay,
+  leave: handleLeave,
+  queue: handleQueue,
+  repeat: handleRepeat,
+  skip: handleSkip
+}
+
+export const handleCommandByName = (name: string) => {
+  if (Object.keys(COMMAND_MAP).includes(name)) {
+    return COMMAND_MAP[name];
+  }
+}
