@@ -2,6 +2,7 @@ import { AudioPlayerStatus, AudioResource, entersState, joinVoiceChannel, VoiceC
 import { GuildMember, CommandInteraction, Snowflake } from "discord.js";
 import { MusicSubscription } from "./music/subscription";
 import { Track } from "./music/track";
+import { search } from "./search/search";
 
 declare type InteractionConsumer = (
   interaction: CommandInteraction,
@@ -23,7 +24,7 @@ const handlePlay = async (
   let subscription = getSubscription(subscriptions, interaction.guildId);
 
   await interaction.deferReply();
-  const url = interaction.options.getString('url', true);
+
   if (!subscription) {
     if (interaction.member instanceof GuildMember && interaction.member.voice.channel) {
       const channel = interaction.member.voice.channel;
@@ -55,7 +56,20 @@ const handlePlay = async (
     return;
   }
 
+  let url: string | undefined;
+
+  if (interaction.options.getSubcommand() === 'link') {
+    url = interaction.options.getString('url', true);
+  } else {
+    const keywords = interaction.options.getString('keywords', true);
+    url = await search(keywords);
+  }
+
   try {
+    if (url === undefined) {
+      throw new Error('url is undefined');
+    }
+    
     // Attempt to create a Track from the user's video URL
     const track = await Track.from(url, {
       onStart() {
