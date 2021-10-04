@@ -135,7 +135,7 @@ export class Track implements TrackData {
       
       return new Track({
         title: info.videoDetails.title,
-        url,
+        url: info.videoDetails.video_url,
         ...wrappedMethods,
       });
     }
