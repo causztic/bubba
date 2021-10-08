@@ -1,7 +1,9 @@
-import { getInfo } from 'ytdl-core';
+import ytdl, { getInfo } from 'ytdl-core';
 import { AudioResource, createAudioResource, demuxProbe } from '@discordjs/voice';
-import { raw as ytdl } from 'youtube-dl-exec';
+import { raw } from 'youtube-dl-exec';
 import { hideLinkEmbed } from '@discordjs/builders';
+import { youtube, youtube_v3 } from '@googleapis/youtube';
+import { youtubeApiKey } from '../../config.json';
 
 /**
 * This is the data required to create a Track object
@@ -77,7 +79,7 @@ export class Track implements TrackData {
   */
   public createAudioResource(): Promise<AudioResource<Track>> {
     return new Promise((resolve, reject) => {
-      const process = ytdl(
+      const process = raw(
         this.url,
         {
           o: '-',
@@ -106,7 +108,62 @@ export class Track implements TrackData {
         .catch(onError);
       });
     }
+
+    /**
+    * Creates a list of Tracks from a playlist id and lifecycle callback methods.
+    *
+    * @param playlistId The ID of the playlist
+    * @param methods Lifecycle callbacks
+    * @returns The created Track
+    */
+
+    public static async listFrom(playlistId: string, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Promise<Track[]> {
+      const yt = youtube('v3');
+      const { data } = await yt.playlistItems.list({
+        playlistId,
+        auth: youtubeApiKey,
+        maxResults: 100,
+        part: ['snippet'],
+      })
+
+      const tracks = data.items?.map((item) => this.fromInfo(item, methods));
+
+      return tracks ?? [];
+    }
     
+    /**
+    * Creates a Track directly from youtube API and lifecycle callback methods.
+    *
+    * @param item youtube response
+    * @param methods Lifecycle callbacks
+    * @returns The created Track
+    */
+    public static fromInfo(item: youtube_v3.Schema$PlaylistItem, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Track {
+      const url = `https://www.youtube.com/watch?v=${item.snippet?.resourceId?.videoId}`;
+        
+      // The methods are wrapped so that we can ensure that they are only called once.
+      const wrappedMethods = {
+        onStart() {
+          wrappedMethods.onStart = noop;
+          methods.onStart();
+        },
+        onFinish() {
+          wrappedMethods.onFinish = noop;
+          methods.onFinish();
+        },
+        onError(error: Error) {
+          wrappedMethods.onError = noop;
+          methods.onError(error);
+        },
+      };
+      
+      return new Track({
+        title: item.snippet?.title!,
+        url,
+        ...wrappedMethods,
+      });
+    }
+
     /**
     * Creates a Track from a video URL and lifecycle callback methods.
     *
@@ -116,7 +173,7 @@ export class Track implements TrackData {
     */
     public static async from(url: string, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Promise<Track> {
       const info = await getInfo(url);
-      
+
       // The methods are wrapped so that we can ensure that they are only called once.
       const wrappedMethods = {
         onStart() {

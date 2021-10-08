@@ -57,23 +57,46 @@ const handlePlay = async (
 				if (url === undefined) {
 					throw new Error('url is undefined');
 				}
-				
-				// Attempt to create a Track from the user's video URL
-				const track = await Track.from(url, {
-					onStart() {
-						interaction.followUp({ content: 'Now playing!', ephemeral: true }).catch(console.warn);
-					},
-					onFinish() {
-						interaction.followUp({ content: 'Now finished!', ephemeral: true }).catch(console.warn);
-					},
-					onError(error) {
-						console.warn(error);
-						interaction.followUp({ content: `Error: ${error.message}`, ephemeral: true }).catch(console.warn);
-					},
-				});
-				// Enqueue the track and reply a success message to the user
-				subscription.enqueue(track);
-				await interaction.followUp(`Enqueued ${track.link()}`);
+
+				// todo: refactor
+				const listRegex = new RegExp(/(\?|\&)list=(?<id>.+)&/); 
+				const playlistId = listRegex.exec(url)?.groups?.id;
+
+				if (playlistId) {
+					// Attempt to add multiple tracks from the user's video URL
+					const tracks = await Track.listFrom(playlistId, {
+						onStart() {
+							interaction.followUp({ content: 'Now playing!', ephemeral: true }).catch(console.warn);
+						},
+						onFinish() {
+							interaction.followUp({ content: 'Now finished!', ephemeral: true }).catch(console.warn);
+						},
+						onError(error) {
+							console.warn(error);
+							interaction.followUp({ content: `Error: ${error.message}`, ephemeral: true }).catch(console.warn);
+						},
+					});
+
+					subscription.enqueueMultiple(tracks);
+					await interaction.followUp(`Enqueued playlist with ${tracks.length} tracks!`);
+				} else {
+					// Attempt to create a Track from the user's video URL
+					const track = await Track.from(url, {
+						onStart() {
+							interaction.followUp({ content: 'Now playing!', ephemeral: true }).catch(console.warn);
+						},
+						onFinish() {
+							interaction.followUp({ content: 'Now finished!', ephemeral: true }).catch(console.warn);
+						},
+						onError(error) {
+							console.warn(error);
+							interaction.followUp({ content: `Error: ${error.message}`, ephemeral: true }).catch(console.warn);
+						},
+					});
+					// Enqueue the track and reply a success message to the user
+					subscription.enqueue(track);
+					await interaction.followUp(`Enqueued ${track.link()}`);
+				}
 			} catch (error) {
 				console.warn(error);
 				await interaction.followUp('Failed to play track, please try again later!');
