@@ -126,7 +126,10 @@ export class Track implements TrackData {
         part: ['snippet'],
       })
 
-      const tracks = data.items?.map((item) => this.fromInfo(item, methods));
+      function isTrack(track: Track | null): track is Track {
+        return track !== null;
+      }
+      const tracks = data.items?.map((item) => this.fromInfo(item, methods)).filter(isTrack);
 
       return tracks ?? [];
     }
@@ -138,7 +141,7 @@ export class Track implements TrackData {
     * @param methods Lifecycle callbacks
     * @returns The created Track
     */
-    public static fromInfo(item: youtube_v3.Schema$PlaylistItem, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Track {
+    public static fromInfo(item: youtube_v3.Schema$PlaylistItem, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Track | null {
       const url = `https://www.youtube.com/watch?v=${item.snippet?.resourceId?.videoId}`;
         
       // The methods are wrapped so that we can ensure that they are only called once.
@@ -156,6 +159,11 @@ export class Track implements TrackData {
           methods.onError(error);
         },
       };
+
+      // HACK: don't add deleted videos
+      if (item.snippet?.title === 'Deleted video') {
+        return null;
+      }
       
       return new Track({
         title: item.snippet?.title!,
