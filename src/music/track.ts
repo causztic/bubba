@@ -117,7 +117,7 @@ export class Track implements TrackData {
     * @returns The created Track
     */
 
-    public static async listFrom(playlistId: string, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Promise<Track[]> {
+    public static async listFrom(playlistId: string): Promise<Track[]> {
       const yt = youtube('v3');
       const { data } = await yt.playlistItems.list({
         playlistId,
@@ -129,7 +129,7 @@ export class Track implements TrackData {
       function isTrack(track: Track | null): track is Track {
         return track !== null;
       }
-      const tracks = data.items?.map((item) => this.fromInfo(item, methods)).filter(isTrack);
+      const tracks = data.items?.map((item) => this.fromInfo(item)).filter(isTrack);
 
       return tracks ?? [];
     }
@@ -141,22 +141,19 @@ export class Track implements TrackData {
     * @param methods Lifecycle callbacks
     * @returns The created Track
     */
-    public static fromInfo(item: youtube_v3.Schema$PlaylistItem, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Track | null {
+    public static fromInfo(item: youtube_v3.Schema$PlaylistItem): Track | null {
       const url = `https://www.youtube.com/watch?v=${item.snippet?.resourceId?.videoId}`;
         
-      // The methods are wrapped so that we can ensure that they are only called once.
+      // No method calls as token would run out in long playlists
       const wrappedMethods = {
         onStart() {
           wrappedMethods.onStart = noop;
-          methods.onStart();
         },
         onFinish() {
           wrappedMethods.onFinish = noop;
-          methods.onFinish();
         },
         onError(error: Error) {
           wrappedMethods.onError = noop;
-          methods.onError(error);
         },
       };
 

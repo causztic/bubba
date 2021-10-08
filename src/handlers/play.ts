@@ -5,6 +5,38 @@ import { Track } from "../music/track";
 import { search } from "../search/search";
 import { getSubscription } from "../util";
 
+const getPlaylistId = (url: string) => {
+	const listRegex = new RegExp(/(\?|\&)list=(?<id>.+)&/); 
+	return listRegex.exec(url)?.groups?.id;
+}
+
+const enqueuePlaylist = async (id: string, interaction: CommandInteraction, subscription: MusicSubscription) => {
+	// Attempt to add multiple tracks from the user's video URL
+	const tracks = await Track.listFrom(id);
+	// Enqueue the track and reply a success message to the user
+	subscription.enqueueMultiple(tracks);
+	await interaction.followUp(`Enqueued playlist with ${tracks.length} tracks!`);
+}
+
+const enqueueTrack = async (url: string, interaction: CommandInteraction, subscription: MusicSubscription) => {
+	// Attempt to create a Track from the user's video URL
+	const track = await Track.from(url, {
+		onStart() {
+			interaction.followUp({ content: 'Now playing!', ephemeral: true }).catch(console.warn);
+		},
+		onFinish() {
+			interaction.followUp({ content: 'Now finished!', ephemeral: true }).catch(console.warn);
+		},
+		onError(error: Error) {
+			console.warn(error);
+			interaction.followUp({ content: `Error: ${error.message}`, ephemeral: true }).catch(console.warn);
+		},
+	});
+	// Enqueue the track and reply a success message to the user
+	subscription.enqueue(track);
+	await interaction.followUp(`Enqueued ${track.link()}`);
+}
+
 const handlePlay = async (
 	interaction: CommandInteraction,
 	subscriptions: Map<Snowflake, MusicSubscription>
@@ -57,36 +89,13 @@ const handlePlay = async (
 				if (url === undefined) {
 					throw new Error('url is undefined');
 				}
-				
-				const methods = {
-					onStart() {
-						interaction.followUp({ content: 'Now playing!', ephemeral: true }).catch(console.warn);
-					},
-					onFinish() {
-						interaction.followUp({ content: 'Now finished!', ephemeral: true }).catch(console.warn);
-					},
-					onError(error: Error) {
-						console.warn(error);
-						interaction.followUp({ content: `Error: ${error.message}`, ephemeral: true }).catch(console.warn);
-					},
-				}
 
-				// todo: refactor
-				const listRegex = new RegExp(/(\?|\&)list=(?<id>.+)&/); 
-				const playlistId = listRegex.exec(url)?.groups?.id;
+				const playlistId = getPlaylistId(url);
 
 				if (playlistId) {
-					// Attempt to add multiple tracks from the user's video URL
-					const tracks = await Track.listFrom(playlistId, methods);
-					// Enqueue the track and reply a success message to the user
-					subscription.enqueueMultiple(tracks);
-					await interaction.followUp(`Enqueued playlist with ${tracks.length} tracks!`);
+					enqueuePlaylist(url, interaction, subscription);
 				} else {
-					// Attempt to create a Track from the user's video URL
-					const track = await Track.from(url, methods);
-					// Enqueue the track and reply a success message to the user
-					subscription.enqueue(track);
-					await interaction.followUp(`Enqueued ${track.link()}`);
+					enqueueTrack(url, interaction, subscription);
 				}
 			} catch (error) {
 				console.warn(error);
