@@ -94,7 +94,7 @@ const handlePlay = async (
 				const playlistId = getPlaylistId(url);
 
 				if (playlistId) {
-					enqueuePlaylist(url, interaction, subscription);
+					enqueuePlaylist(playlistId, interaction, subscription);
 				} else {
 					enqueueTrack(url, interaction, subscription);
 				}
