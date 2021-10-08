@@ -21,7 +21,7 @@ const handleQueue = async (
     }
 
     const queue = subscription.queue
-      .slice(0, 5)
+      .slice(0, 10)
       .map((track, index) => `${index + 1}) ${track.title}`)
       .join('\n');
 

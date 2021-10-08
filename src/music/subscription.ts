@@ -111,6 +111,16 @@ export class MusicSubscription {
       this.queue.push(track);
       void this.processQueue();
     }
+
+    /**
+    * Adds multiple tracks to the queue.
+    *
+    * @param tracks The tracks to add to the queue
+    */
+    public enqueueMultiple(tracks: Track[]) {
+      this.queue.push(...tracks);
+      void this.processQueue();
+    }
     
     /**
     * Stops audio playback and empties the queue
