@@ -6,8 +6,9 @@ import { search } from "../search/search";
 import { getSubscription } from "../util";
 
 const getPlaylistId = (url: string) => {
-	const listRegex = new RegExp(/(\?|\&)list=(?<id>.+)&/); 
-	return listRegex.exec(url)?.groups?.id;
+	// TODO: there's probably a cleaner regex 
+	const listRegex = new RegExp(/(\?|\&)list=(?<id>.+)/);
+	return listRegex.exec(url)?.groups?.id.split('&')[0];
 }
 
 const enqueuePlaylist = async (id: string, interaction: CommandInteraction, subscription: MusicSubscription) => {
