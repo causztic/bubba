@@ -139,6 +139,20 @@ export class MusicSubscription {
     }
 
     /**
+     * Shuffles the current queue
+     */
+    public shuffle() {
+      const queue = [...this.queue];
+
+      for (let index = this.queue.length - 1; index > 0; index--) {
+        const newIndex = Math.floor(Math.random() * (index + 1));
+        [queue[index], queue[newIndex]] = [queue[newIndex], queue[index]];
+      }
+
+      this.queue = queue;
+    }
+
+    /**
      * A queue is really empty only if the length is 0 and there is no currentTrack.
      */
     private isEmptyQueue() {
