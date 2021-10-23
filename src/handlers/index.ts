@@ -3,6 +3,7 @@ import handlePlay from "./play";
 import handleQueue from "./queue";
 import handleRepeat from "./repeat";
 import handleSkip from "./skip";
+import handleShuffle from "./shuffle";
 
 import { CommandInteraction, Snowflake } from "discord.js";
 import { MusicSubscription } from "../music/subscription";
@@ -17,7 +18,8 @@ const COMMAND_MAP: { [key: string]: InteractionConsumer } = {
   leave: handleLeave,
   queue: handleQueue,
   repeat: handleRepeat,
-  skip: handleSkip
+  skip: handleSkip,
+  shuffle: handleShuffle,
 }
 
 export const handleCommandByName = (name: string) => {
