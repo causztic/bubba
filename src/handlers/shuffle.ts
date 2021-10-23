@@ -7,7 +7,7 @@ const handleShuffle = async (
 	subscriptions: Map<Snowflake, MusicSubscription>
 	) => {
 		const subscription = getSubscription(subscriptions, interaction.guildId);
-    subscription?.shuffle();
+		subscription?.shuffle();
 		await interaction.reply('Shuffled playlist!');
 	}
 

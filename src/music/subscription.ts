@@ -140,6 +140,8 @@ export class MusicSubscription {
 
     /**
      * Shuffles the current queue
+     * from: https://github.com/sindresorhus/array-shuffle
+     * Uses the Durstenfeld algorithm which is based on the Fisher–Yates algorithm.
      */
     public shuffle() {
       const queue = [...this.queue];
