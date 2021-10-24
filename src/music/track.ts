@@ -50,8 +50,8 @@ export class Track implements TrackData {
     this.repeating = !this.repeating;
   }
 
-  public link(): string {
-    return `**${this.title}** - ${hideLinkEmbed(this.url)}`;
+  public link(hide = true): string {
+    return `**${this.title}** - ${hide ? hideLinkEmbed(this.url) : this.url}`;
   }
 
   /**
