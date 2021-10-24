@@ -7,6 +7,7 @@ import handleShuffle from "./shuffle";
 
 import { CommandInteraction, Snowflake } from "discord.js";
 import { MusicSubscription } from "../music/subscription";
+import handleNowPlaying from "./nowPlaying";
 
 declare type InteractionConsumer = (
   interaction: CommandInteraction,
@@ -20,6 +21,7 @@ const COMMAND_MAP: { [key: string]: InteractionConsumer } = {
   repeat: handleRepeat,
   skip: handleSkip,
   shuffle: handleShuffle,
+  np: handleNowPlaying,
 }
 
 export const handleCommandByName = (name: string) => {
