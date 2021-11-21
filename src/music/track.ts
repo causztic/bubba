@@ -34,16 +34,16 @@ export class Track implements TrackData {
   public readonly onError: (error: Error) => void;
   public repeating: boolean;
 
-  private readonly wrapperOnStart: () => void;
-  private readonly wrapperOnFinish: () => void;
+  private readonly wrappedOnStart: () => void;
+  private readonly wrappedOnFinish: () => void;
   
   private constructor({ url, title, onStart, onFinish, onError }: TrackData) {
     this.url = url;
     this.title = title;
     this.repeating = false;
     this.onError = onError;
-    this.wrapperOnStart = onStart;
-    this.wrapperOnFinish = onFinish;
+    this.wrappedOnStart = onStart;
+    this.wrappedOnFinish = onFinish;
   }
 
   public toggleRepeating(): void {
@@ -60,7 +60,7 @@ export class Track implements TrackData {
    */
   public onStart(): void {
     if (!this.repeating) {
-      this.wrapperOnStart();
+      this.wrappedOnStart();
     }
   }
 
@@ -70,7 +70,7 @@ export class Track implements TrackData {
    */
   public onFinish(): void {
     if (!this.repeating) {
-      this.wrapperOnFinish();
+      this.wrappedOnFinish();
     }
   }
   
@@ -146,15 +146,9 @@ export class Track implements TrackData {
         
       // No method calls as token would run out in long playlists
       const wrappedMethods = {
-        onStart() {
-          wrappedMethods.onStart = noop;
-        },
-        onFinish() {
-          wrappedMethods.onFinish = noop;
-        },
-        onError(error: Error) {
-          wrappedMethods.onError = noop;
-        },
+        onStart: noop,
+        onFinish: noop,
+        onError: noop
       };
 
       // HACK: don't add deleted videos
@@ -178,27 +172,11 @@ export class Track implements TrackData {
     */
     public static async from(url: string, methods: Pick<Track, 'onStart' | 'onFinish' | 'onError'>): Promise<Track> {
       const info = await getInfo(url);
-
-      // The methods are wrapped so that we can ensure that they are only called once.
-      const wrappedMethods = {
-        onStart() {
-          wrappedMethods.onStart = noop;
-          methods.onStart();
-        },
-        onFinish() {
-          wrappedMethods.onFinish = noop;
-          methods.onFinish();
-        },
-        onError(error: Error) {
-          wrappedMethods.onError = noop;
-          methods.onError(error);
-        },
-      };
       
       return new Track({
         title: info.videoDetails.title,
         url: info.videoDetails.video_url,
-        ...wrappedMethods,
+        ...methods,
       });
     }
   }
